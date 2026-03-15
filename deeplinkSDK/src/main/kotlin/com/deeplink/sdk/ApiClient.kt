@@ -62,9 +62,12 @@ internal object ApiClient {
         alias: String? = null,
         title: String? = null,
         description: String? = null,
+        ogImage: String? = null,
         utmSource: String? = null,
         utmMedium: String? = null,
         utmCampaign: String? = null,
+        utmContent: String? = null,
+        utmTerm: String? = null,
         expiresAt: String? = null,
         callback: (CreatedLink?) -> Unit,
     ) {
@@ -78,9 +81,12 @@ internal object ApiClient {
                 alias?.let       { put("alias", it) }
                 title?.let       { put("title", it) }
                 description?.let { put("description", it) }
+                ogImage?.let     { put("og_image", it) }
                 utmSource?.let   { put("utm_source", it) }
                 utmMedium?.let   { put("utm_medium", it) }
                 utmCampaign?.let { put("utm_campaign", it) }
+                utmContent?.let  { put("utm_content", it) }
+                utmTerm?.let     { put("utm_term", it) }
                 expiresAt?.let   { put("expires_at", it) }
             }
             DeeplinkLogger.log("createLink → dest=$destination")

@@ -184,6 +184,18 @@ object DeeplinkSDK {
      * The [params] map is returned by [getInitData] when the recipient opens the app,
      * letting you pass arbitrary data through the link.
      *
+     * ```kotlin
+     * DeeplinkSDK.createLink(
+     *     destination = "https://yourapp.com/product/123",
+     *     params = mapOf("product_id" to "123"),
+     *     ogImage = "https://yourapp.com/images/product.jpg",
+     *     utmSource = "instagram",
+     *     utmCampaign = "summer_sale"
+     * ) { result ->
+     *     result?.let { share(it.url) }
+     * }
+     * ```
+     *
      * @param callback Invoked on the **main thread** with [CreatedLink] or null on failure.
      */
     fun createLink(
@@ -194,9 +206,12 @@ object DeeplinkSDK {
         alias: String? = null,
         title: String? = null,
         description: String? = null,
+        ogImage: String? = null,
         utmSource: String? = null,
         utmMedium: String? = null,
         utmCampaign: String? = null,
+        utmContent: String? = null,
+        utmTerm: String? = null,
         expiresAt: String? = null,
         callback: (CreatedLink?) -> Unit,
     ) {
@@ -210,9 +225,12 @@ object DeeplinkSDK {
             alias = alias,
             title = title,
             description = description,
+            ogImage = ogImage,
             utmSource = utmSource,
             utmMedium = utmMedium,
             utmCampaign = utmCampaign,
+            utmContent = utmContent,
+            utmTerm = utmTerm,
             expiresAt = expiresAt,
         ) { result -> mainThread { callback(result) } }
     }
