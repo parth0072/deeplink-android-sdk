@@ -102,6 +102,38 @@ internal object ApiClient {
         }.start()
     }
 
+    fun fetchLinkData(config: DeeplinkConfig, alias: String, callback: (DeeplinkData?) -> Unit) {
+        Thread {
+            DeeplinkLogger.log("fetchLinkData → alias=$alias")
+            val result = get(config, "/sdk/resolve/$alias") { json ->
+                val matched = json.optBoolean("matched", false)
+                if (!matched) return@get null
+                val data = json.optJSONObject("data") ?: return@get null
+                val meta = mutableMapOf<String, String>()
+                data.optJSONObject("metadata")?.let { m ->
+                    m.keys().forEach { k -> meta[k] = m.optString(k) }
+                }
+                DeeplinkData(
+                    linkId         = data.getString("linkId"),
+                    alias          = data.getString("alias"),
+                    iosUrl         = data.optString("iosUrl").takeIf { it.isNotEmpty() },
+                    androidUrl     = data.optString("androidUrl").takeIf { it.isNotEmpty() },
+                    destinationUrl = data.getString("destinationUrl"),
+                    utmSource      = data.optString("utmSource").takeIf { it.isNotEmpty() },
+                    utmMedium      = data.optString("utmMedium").takeIf { it.isNotEmpty() },
+                    utmCampaign    = data.optString("utmCampaign").takeIf { it.isNotEmpty() },
+                    utmContent     = data.optString("utmContent").takeIf { it.isNotEmpty() },
+                    utmTerm        = data.optString("utmTerm").takeIf { it.isNotEmpty() },
+                    metadata       = meta,
+                    creativeName   = data.optString("creativeName").takeIf { it.isNotEmpty() },
+                    creativeId     = data.optString("creativeId").takeIf { it.isNotEmpty() },
+                )
+            }
+            DeeplinkLogger.log("fetchLinkData ← metadata=${result?.metadata}")
+            callback(result)
+        }.start()
+    }
+
     fun recordImpression(config: DeeplinkConfig, alias: String, callback: ((Boolean) -> Unit)? = null) {
         Thread {
             val body = JSONObject().apply {
@@ -151,6 +183,27 @@ internal object ApiClient {
         parse(JSONObject(conn.inputStream.bufferedReader().readText()))
     } catch (e: Exception) {
         DeeplinkLogger.error("POST $path failed", e)
+        null
+    }
+
+    private fun <T> get(
+        config: DeeplinkConfig,
+        path: String,
+        timeout: Int = 10_000,
+        parse: (JSONObject) -> T?,
+    ): T? = try {
+        val conn = (URL("${config.apiBaseUrl}$path?api_key=${config.apiKey}").openConnection() as HttpURLConnection).apply {
+            requestMethod = "GET"
+            connectTimeout = timeout
+            readTimeout = timeout
+        }
+        if (conn.responseCode !in 200..299) {
+            DeeplinkLogger.error("GET $path returned ${conn.responseCode}")
+            return null
+        }
+        parse(JSONObject(conn.inputStream.bufferedReader().readText()))
+    } catch (e: Exception) {
+        DeeplinkLogger.error("GET $path failed", e)
         null
     }
 

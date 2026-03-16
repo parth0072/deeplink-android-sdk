@@ -235,6 +235,31 @@ object DeeplinkSDK {
         ) { result -> mainThread { callback(result) } }
     }
 
+    /**
+     * Fetch server-stored params/metadata for a link by alias.
+     *
+     * Call this after [handleIntent] returns an [IncomingLink] to retrieve the
+     * `params` dictionary set at link creation time — these are NOT embedded in
+     * the URL and require a server lookup.
+     *
+     * ```kotlin
+     * DeeplinkSDK.handleIntent(intent) { link ->
+     *     link?.pathSegments?.firstOrNull()?.let { alias ->
+     *         DeeplinkSDK.getLinkData(alias) { data ->
+     *             val productId = data?.metadata?.get("product_id")
+     *         }
+     *     }
+     * }
+     * ```
+     *
+     * @param callback Invoked on the **main thread** with [DeeplinkData] or null.
+     */
+    fun getLinkData(alias: String, callback: (DeeplinkData?) -> Unit) {
+        ApiClient.fetchLinkData(requireConfig(), alias) { result ->
+            mainThread { callback(result) }
+        }
+    }
+
     // MARK: - Impression & Events
 
     /**
