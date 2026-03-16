@@ -57,6 +57,8 @@ object DeeplinkSDK {
     private const val PREF_SESSION_ID   = "session_id"
 
     private var config: DeeplinkConfig? = null
+    /** In-memory cache: alias → DeeplinkData. Populated by getInitData/onFirstLaunch. */
+    private val linkDataCache = mutableMapOf<String, DeeplinkData>()
     private var linkHandler: LinkHandler? = null
     private var appContext: Context? = null
 
@@ -131,6 +133,7 @@ object DeeplinkSDK {
             ApiClient.fetchInitData(cfg, collectDeviceSignals(ctx), referrerClickId) { data ->
                 if (data != null) {
                     prefs.edit().putBoolean(PREF_INIT_FETCHED, true).apply()
+                    linkDataCache[data.alias] = data
                     DeeplinkLogger.log("getInitData — matched alias=${data.alias}")
                 } else {
                     DeeplinkLogger.log("getInitData — no match")
@@ -255,7 +258,14 @@ object DeeplinkSDK {
      * @param callback Invoked on the **main thread** with [DeeplinkData] or null.
      */
     fun getLinkData(alias: String, callback: (DeeplinkData?) -> Unit) {
+        // Return cached result if getInitData already fetched this alias — no extra network call
+        linkDataCache[alias]?.let { cached ->
+            DeeplinkLogger.log("getLinkData — cache hit for alias=$alias")
+            mainThread { callback(cached) }
+            return
+        }
         ApiClient.fetchLinkData(requireConfig(), alias) { result ->
+            if (result != null) linkDataCache[result.alias] = result
             mainThread { callback(result) }
         }
     }
