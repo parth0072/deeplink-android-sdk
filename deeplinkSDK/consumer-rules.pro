@@ -1,5 +1,0 @@
--keep class com.deeplink.sdk.DeeplinkSDK { *; }
--keep class com.deeplink.sdk.DeeplinkData { *; }
--keep class com.deeplink.sdk.CreatedLink { *; }
--keep class com.deeplink.sdk.IncomingLink { *; }
--keep class com.deeplink.sdk.DeeplinkInitProvider { *; }
